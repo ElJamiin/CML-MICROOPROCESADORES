@@ -26,5 +26,8 @@ jobs:
     - name: Upload plot
       uses: actions/upload-artifact@v3
       with:
-        name: clusters-plot
-        path: clusters_plot.png
+        name: prediction-results
+        path: |
+          prediction_plot.png
+          rf_model.pkl
+          metrics.txt
