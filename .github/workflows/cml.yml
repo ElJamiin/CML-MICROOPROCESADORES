@@ -35,7 +35,7 @@ jobs:
         pip install -r requirements.txt
         pip install notebook
 
-    - name: Run training Notebook #se agrego Notebook al codigos
+    - name: Run training Notebook #se agrego Notebook al codigo
       run: jupyter nbconvert --to notebook --execute --inplace randoForest.ipynb #prueba para ver si utiliza el dataset si subir al github, archivo original train.py
 
     - name: Upload plot
