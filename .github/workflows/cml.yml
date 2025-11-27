@@ -24,7 +24,7 @@ jobs:
       run: |
         mkdir -p ~/.config/rclone/
         echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
-        rclone copy MiDrive: datos_modificados1.csv
+        rclone copy MiDrive: microprosesadores/datos_modificados1.csv
     
     - name: Install dependencies
       run: |
