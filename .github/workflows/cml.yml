@@ -3,45 +3,43 @@ name: CI for ML project
 on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8'
-        
-    - name: Install rclone
-      run: |
-        sudo apt-get update && sudo apt-get install -y rclone
-    
-    #  PASO DE DESCARGA CORREGIDO 
-    - name: Configure rclone and download Dataset
-      env:
-        RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
-      run: |
-        mkdir -p ~/.config/rclone/
-        
-        # 1. CORRECCIÓN SINTAXIS BASH: Se cambió \" por \n para evitar el error 'unexpected EOF'
-        printf "%s\n" "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
-        
-        # 2. CORRECCIÓN RUTA: Se eliminó el espacio después de MiDrive: para evitar el error 404
-        #    Se agregó el punto final . para indicar el destino (carpeta actual)
-        rclone copy MiDrive:microprosesadores/datos_modificados1.csv . --config ~/.config/rclone/rclone.conf
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install notebook
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8'
+
+    - name: Install rclone
+      run: |
+        sudo apt-get update && sudo apt-get install -y rclone
+
+    - name: Configure rclone and download Dataset
+      env:
+        RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+      run: |
+        mkdir -p ~/.config/rclone/
+
+        printf "%s\" "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
+
+        rclone copy MiDrive: microprosesadores/datos_modificados1.csv . --config ~/.config/rclone/rclone.conf
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install notebook
 
     - name: Run training Notebook #se agrego Notebook al codigos
       run: jupyter nbconvert --to notebook --execute --inplace randoForest.ipynb #prueba para ver si utiliza el dataset si subir al github, archivo original train.py
-      
+
     - name: Upload plot
       uses: actions/upload-artifact@v4
       with:
