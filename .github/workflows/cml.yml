@@ -23,8 +23,7 @@ jobs:
         RLCLONE_CONIG: ${{ [MiDrive]
                         type = drive
                         scope = drive
-                        token = {"access_token":"ya29.a0ATi6K2si0AkWIP0uNwmNyrGyBp1bx-M3ataMdkPraUkOn3lpaV1U4x6HAk_Ox4KEuABR-heJv7cgsl8nXd99WTa8qEja7wGC3PA6kWZXBJmdrrDuf3agpUiBxfshshb8auGEsWypFBNdyFdf2q6B3Qx9xgckHhK4yDi-GdT0-KtuG0GLbu4o4LDqB6hA0DYQL8ArmYIaCgYKAY4SARcSFQHGX2Mil05shOF9aSbc4kPGT3n7zQ0206","token_type":"Bearer","refresh_token":"1//0hiXaw400R2lKCgYIARAAGBESNwF-L9IriDXu-AlNxVECbE4uR4oXeDqOSVK_SHjodaNWzBWo9uItqRD-E9REaSJIdUZmEB9Ptso","expiry":"2025-11-26T23:55:59.9351118-03:00","expires_in":3599}
-                        team_drive = }}
+                        token = {"access_token":"ya29.a0ATi6K2si0AkWIP0uNwmNyrGyBp1bx-M3ataMdkPraUkOn3lpaV1U4x6HAk_Ox4KEuABR-heJv7cgsl8nXd99WTa8qEja7wGC3PA6kWZXBJmdrrDuf3agpUiBxfshshb8auGEsWypFBNdyFdf2q6B3Qx9xgckHhK4yDi-GdT0-KtuG0GLbu4o4LDqB6hA0DYQL8ArmYIaCgYKAY4SARcSFQHGX2Mil05shOF9aSbc4kPGT3n7zQ0206","token_type":"Bearer","refresh_token":"1//0hiXaw400R2lKCgYIARAAGBESNwF-L9IriDXu-AlNxVECbE4uR4oXeDqOSVK_SHjodaNWzBWo9uItqRD-E9REaSJIdUZmEB9Ptso","expiry":"2025-11-26T23:55:59.9351118-03:00","expires_in":3599}}}
       run: |
         mkdir -p ~/.config/rclone/
         echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
