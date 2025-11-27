@@ -19,7 +19,7 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y rclone
     
-    # 🌟 PASO DE DESCARGA CORREGIDO 🌟
+    #  PASO DE DESCARGA CORREGIDO 
     - name: Configure rclone and download Dataset
       env:
         RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
