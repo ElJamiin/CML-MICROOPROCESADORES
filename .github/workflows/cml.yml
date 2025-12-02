@@ -3,46 +3,66 @@ name: CI for ML project
 on: [push]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
 
-    - name: Install rclone
-      run: |
-        sudo apt-get update && sudo apt-get install -y rclone
+      - name: Install rclone
+        run: |
+          sudo apt-get update && sudo apt-get install -y rclone
 
-    - name: Configure rclone and download Dataset
-      env:
-        RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
-      run: |
-        mkdir -p ~/.config/rclone/
-        printf "%s\n" "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
-        rclone copy MiDrive:microprosesadores/datos_modificados1.csv . --config ~/.config/rclone/rclone.conf
+      - name: Configure rclone and download Dataset
+        env:
+          RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+        run: |
+          mkdir -p ~/.config/rclone/
+          printf "%s\n" "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
+          # El dataset se descarga con el nombre 'datos_modificados1.csv'
+          rclone copy MiDrive:microprosesadores/datos_modificados1.csv . --config ~/.config/rclone/rclone.conf
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install notebook
+      - name: Install dependencies (incluyendo Deep Learning)
+        run: |
+          python -m pip install --upgrade pip
+          # Aquí debes incluir TensorFlow/PyTorch en tu requirements.txt para LSTM
+          pip install -r requirements.txt
+          pip install notebook
+          # Si tu requirements.txt no tiene TensorFlow, puedes añadirlo aquí
+          # pip install tensorflow
 
-    - name: Run training Notebook #se agrego Notebook al codigo
-      run: jupyter nbconvert --to notebook --execute --inplace randoForest.ipynb #prueba para ver si utiliza el dataset si subir al github, archivo original train.py
+      # =======================================================
+      # 1. ENTRENAMIENTO: RANDOM FOREST
+      # =======================================================
+      - name: 🏃‍♀️ Run training Notebook (Random Forest)
+        # Este notebook debe guardar: rf_model.pkl, metrics_rf.txt, prediction_plot.png
+        run: jupyter nbconvert --to notebook --execute --inplace randoForest.ipynb
 
-    - name: Upload plot
-      uses: actions/upload-artifact@v4
-      with:
-        name: prediction-results
-        path: |
-          prediction_plot.png
-          rf_model.pkl
-          metrics.txt
+      # =======================================================
+      # 2. ENTRENAMIENTO: LSTM
+      # =======================================================
+      - name: 🧠 Run training Notebook (LSTM)
+        # Este notebook debe guardar: lstm_model.h5, metrics_lstm.txt
+        run: jupyter nbconvert --to notebook --execute --inplace lstm.ipynb
+
+      # =======================================================
+      # 3. SUBIDA DE ARTEFACTOS (Ambos modelos)
+      # =======================================================
+      - name: 📤 Upload results (Dual Model)
+        uses: actions/upload-artifact@v4
+        with:
+          name: prediction-results-dual
+          path: |
+            # Archivos de Random Forest
+            rf_model.pkl
+            metrics_rf.txt
+            prediction_plot.png 
+            # Archivos de LSTM
+            lstm_model.h5 # Usamos el formato h5 para Keras/TensorFlow
+            metrics_lstm.txt
