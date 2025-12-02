@@ -6,3 +6,4 @@ scipy
 statsmodels
 joblib
 scikit-learn
+tensorflow
