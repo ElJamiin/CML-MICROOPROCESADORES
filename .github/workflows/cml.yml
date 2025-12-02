@@ -66,3 +66,4 @@ jobs:
             # Archivos de LSTM
             lstm_model.h5 # Usamos el formato h5 para Keras/TensorFlow
             metrics_lstm.txt
+            plot_lstm.png
