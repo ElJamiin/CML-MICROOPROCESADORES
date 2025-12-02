@@ -48,7 +48,6 @@ jobs:
         with:
           name: lstm-prediction-results
           path: |
-            # Asegúrate de que tu lstm.ipynb guarde los archivos con estos nombres
-            plot_lstm.png # Gráfico generado
-            lstm_model.h5 # Modelo LSTM guardado
-            metrics_lstm.txt # Métricas calculadas
+            plot_lstm.png
+            lstm_model.h5
+            metrics_lstm.txt 
