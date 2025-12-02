@@ -1,4 +1,4 @@
-name: CI for ML project
+name: CI for random forest project
 
 on: [push]
 
