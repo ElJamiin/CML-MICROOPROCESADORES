@@ -180,3 +180,40 @@ plt.legend()
 plt.tight_layout()
 plt.savefig('resultado_final.png')
 print("Gráfico generado: resultado_final.png")
+
+# =======================================================
+# 4. Generación de Artefactos (Para CML)
+# =======================================================
+
+# 4.1. Guardar el Modelo Entrenado (rf_model.pkl)
+model_filename = 'rf_model.pkl'
+joblib.dump(rf_model, model_filename)
+print(f"Modelo guardado como {model_filename}.")
+
+# 4.2. Generar el Gráfico de Predicción (prediction_plot.png)
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, alpha=0.6, color='darkblue')
+max_val = max(y_test.max(), y_pred.max())
+min_val = min(y_test.min(), y_pred.min())
+plt.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2)
+plt.title('Random Forest: Predicción vs. Temperatura Real')
+plt.xlabel('Temperatura Máxima Real')
+plt.ylabel('Temperatura Máxima Predicha')
+plt.grid(True)
+plot_filename = 'prediction_plot.png'
+plt.savefig(plot_filename)
+print(f"Gráfico de predicción guardado como {plot_filename}.")
+
+# 4.3. Guardar las Métricas (metrics.txt)
+metrics_filename = 'metrics.txt'
+with open(metrics_filename, 'w') as f:
+    f.write("Random Forest Regressor - Predicción de Temperatura Máxima\n")
+    f.write("-" * 50 + "\n")
+    f.write(f"Características utilizadas: {features}\n")
+    f.write(f"MSE (Error Cuadrático Medio): {mse:.2f}\n")
+    f.write(f"R2 Score (Coeficiente de Determinación): {r2:.4f}\n")
+print(f"Métricas guardadas en {metrics_filename}.")
+
+# =======================================================
+# Fin del Script para CML
+# =======================================================
