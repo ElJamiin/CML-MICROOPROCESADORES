@@ -27,7 +27,7 @@ jobs:
       run: |
         mkdir -p ~/.config/rclone/
         printf "%s\n" "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
-        rclone copy MiDrive:microprosesadores/datos_modificados1.csv . --config ~/.config/rclone/rclone.conf
+        rclone copy MiDrive:microprosesadores/dataset_ml.csv . --config ~/.config/rclone/rclone.conf
 
     - name: Install dependencies
       run: |
@@ -35,8 +35,8 @@ jobs:
         pip install -r requirements.txt
         pip install notebook
 
-    - name: Run training Notebook #se agrego Notebook al codigo
-      run: jupyter nbconvert --to notebook --execute --inplace randoForest.ipynb #prueba para ver si utiliza el dataset si subir al github, archivo original train.py
+    - name: Run training python #se agrego Notebook al codigo
+      run: python RandomForest.py #prueba para ver si utiliza el dataset si subir al github, archivo original train.py
 
     - name: Upload plot
       uses: actions/upload-artifact@v4
