@@ -43,6 +43,7 @@ jobs:
       with:
         name: prediction-results
         path: |
+          features_H1_hourly.joblib
           random_forest_H1_hourly.joblib
           prediction_plot.png
           rf_model.pkl
