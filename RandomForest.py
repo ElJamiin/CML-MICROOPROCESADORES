@@ -6,13 +6,13 @@ from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import joblib
 import matplotlib.pyplot as plt
 import os
-from sklearn.model_selection import TimeSeriesSplit
+# from sklearn.model_selection import TimeSeriesSplit # No se utiliza en el flujo actual
 
 # --- CONFIGURACIÓN DEL MODELO ---
 prediction_hour = 1 # Predicción a 1 hora (H+1)
 
 # MODO EXPERIMENTAL: Desactivar lags para probar modelo sin persistencia
-USE_LAGS = True  # ← Cambiar a True para activar lags
+USE_LAGS = True # ← Cambiar a True para activar lags
 
 # Características que queremos "desfasar" (Lags)
 lag_features = ['ts', 'hr', 'p0']
@@ -21,10 +21,16 @@ lag_steps = [1, 2, 3] # Desfases de 1, 2 y 3 horas
 file_path = "dataset_ml.csv"
 
 if not os.path.exists(file_path):
-    raise FileNotFoundError(f"No se encuentra: {file_path}")
+    # En un entorno CML, asegúrate de que el archivo 'dataset_ml.csv' exista en el directorio de ejecución.
+    raise FileNotFoundError(f"No se encuentra el archivo: {file_path}. Asegúrate de que esté en la ruta correcta.")
 
 # Cargar dataset
-df = pd.read_csv(file_path, sep=";")
+# Usamos un try-except por si el archivo está en formato incorrecto.
+try:
+    df = pd.read_csv(file_path, sep=";")
+except pd.errors.ParserError:
+    print("Error al leer el CSV. Verifica el separador (sep=';' usado).")
+    exit()
 
 # --- [CORRECCIÓN CRÍTICA] PREPROCESAMIENTO DE FECHA E ÍNDICE ---
 print("--- Procesando Fechas e Índice ---")
@@ -39,27 +45,20 @@ df.set_index('momento', inplace=True)
 df.sort_index(inplace=True)
 
 # 4. [IMPORTANTE] Remuestreo a Hora (Resample)
-# Tus datos originales son por minuto (01:00, 01:01).
-# Tus lags son [1, 2, 3]. Sin esto, el modelo haría lags de 1 minuto.
-# Al hacer resample('H'), promediamos los datos para tener 1 fila por hora.
-print("Datos originales (filas):", df.shape[0])
+# Tus datos originales son por minuto. Para lags horarios, debemos muestrear por hora.
+print(f"Datos originales (filas): {df.shape[0]}")
 df = df.resample('H').mean()
-print("Datos después de resample horario (filas):", df.shape[0])
+print(f"Datos después de resample horario (filas): {df.shape[0]}")
 
 # Eliminar filas que hayan quedado vacías tras el resample (si hay huecos grandes)
 df = df.dropna()
 
 print("VERIFICACIÓN DEL DATASET")
 print(df.shape)
-print(df.columns)
-
-# 1. Mostrar primeras filas
-print("Primeras 5 filas del dataset:")
-print(df.head(), "\n")
+print(df.columns.tolist())
 
 # --- INGENIERÍA DE CARACTERÍSTICAS TEMPORALES ---
 print("--- Extrayendo características temporales (Hora y Día del Año) ---")
-# AHORA SÍ funcionará porque el índice es DatetimeIndex
 df['hour'] = df.index.hour
 df['dayofyear'] = df.index.dayofyear
 
@@ -102,7 +101,8 @@ print("\n--- División de Datos: 60% Train | 20% Validation | 20% Test ---")
 total_size = len(df_model)
 train_size = int(total_size * 0.6)
 val_size = int(total_size * 0.2)
-test_size = total_size - train_size - val_size
+# El tamaño de test se calcula automáticamente para usar el resto
+test_size = total_size - train_size - val_size 
 
 # División temporal (respetando el orden cronológico)
 X_train = X[:train_size]
@@ -120,7 +120,6 @@ print(f"Total:      {total_size:6d} filas")
 
 # --- MODELO RANDOM FOREST REGRESSOR ---
 print("\n--- Entrenando Random Forest Regressor ---")
-# Ajusté min_samples_leaf a 2 porque al reducir los datos a horas tenemos menos filas
 rf_model = RandomForestRegressor(
     n_estimators=100,
     max_depth=20,
@@ -132,6 +131,7 @@ rf_model.fit(X_train, y_train)
 
 # --- FUNCIÓN AUXILIAR PARA CALCULAR MÉTRICAS ---
 def calcular_metricas(y_real, y_pred, set_name):
+    """Calcula y retorna las métricas requeridas para un modelo."""
     mae = mean_absolute_error(y_real, y_pred)
     mse = mean_squared_error(y_real, y_pred)
     rmse = np.sqrt(mse)
@@ -140,9 +140,9 @@ def calcular_metricas(y_real, y_pred, set_name):
     print(f"\n{'='*60}")
     print(f"MÉTRICAS - {set_name}")
     print(f"{'='*60}")
-    print(f"MAE  (Error Absoluto Medio):       {mae:.4f} °C")
-    print(f"RMSE (Raíz Error Cuadrático):      {rmse:.4f} °C")
-    print(f"R²   (Coeficiente Determinación):  {r2:.4f}")
+    print(f"MAE  (Error Absoluto Medio):     {mae:.4f} °C")
+    print(f"RMSE (Raíz Error Cuadrático):   {rmse:.4f} °C")
+    print(f"R²   (Coeficiente Determinación): {r2:.4f}")
     print(f"{'='*60}")
     return {'MAE': mae, 'MSE': mse, 'RMSE': rmse, 'R2': r2}
 
@@ -165,38 +165,31 @@ if diff_r2 > 0.10:
 else:
     print("✅ Ajuste correcto entre Train y Validación.")
 
-# --- GUARDAR MODELO ---
-model_filename = f'random_forest_H{prediction_hour}_hourly.joblib'
-joblib.dump(rf_model, model_filename)
-joblib.dump(X.columns.tolist(), f'features_H{prediction_hour}_hourly.joblib')
-print(f"\nModelo guardado: {model_filename}")
-
-# --- GRÁFICO FINAL RAPIDO ---
-plt.figure(figsize=(12, 5))
-plt.plot(y_test.index, y_test.values, label='Real', alpha=0.6)
-plt.plot(y_test.index, y_test_pred, label='Predicción', alpha=0.7, color='orange')
-plt.title(f'Predicción Temperatura (H+{prediction_hour}) - Test Set')
-plt.legend()
-plt.tight_layout()
-plt.savefig('resultado_final.png')
-print("Gráfico generado: resultado_final.png")
+# 1. Extraer métricas finales del TEST set para CML
+mse = metricas_test['MSE']
+r2 = metricas_test['R2']
 
 # =======================================================
 # 4. Generación de Artefactos (Para CML)
 # =======================================================
+print("\n--- GENERANDO ARTEFACTOS CML ---")
 
-# 4.1. Guardar el Modelo Entrenado (rf_model.pkl)
-model_filename = 'rf_model.pkl'
+# 4.1. Guardar el Modelo Entrenado (rf_model.joblib)
+model_filename = f'rf_model_H{prediction_hour}.joblib'
 joblib.dump(rf_model, model_filename)
 print(f"Modelo guardado como {model_filename}.")
 
 # 4.2. Generar el Gráfico de Predicción (prediction_plot.png)
 plt.figure(figsize=(10, 6))
-plt.scatter(y_test, y_pred, alpha=0.6, color='darkblue')
-max_val = max(y_test.max(), y_pred.max())
-min_val = min(y_test.min(), y_pred.min())
+# Usamos las predicciones del TEST set (y_test_pred) vs los valores reales (y_test)
+plt.scatter(y_test, y_test_pred, alpha=0.6, color='darkblue')
+
+# Configurar la línea de referencia perfecta (y = x)
+max_val = max(y_test.max(), y_test_pred.max())
+min_val = min(y_test.min(), y_test_pred.min())
 plt.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2)
-plt.title('Random Forest: Predicción vs. Temperatura Real')
+
+plt.title('Random Forest: Predicción vs. Temperatura Real (Test Set)')
 plt.xlabel('Temperatura Máxima Real')
 plt.ylabel('Temperatura Máxima Predicha')
 plt.grid(True)
@@ -209,9 +202,11 @@ metrics_filename = 'metrics.txt'
 with open(metrics_filename, 'w') as f:
     f.write("Random Forest Regressor - Predicción de Temperatura Máxima\n")
     f.write("-" * 50 + "\n")
-    f.write(f"Características utilizadas: {features}\n")
-    f.write(f"MSE (Error Cuadrático Medio): {mse:.2f}\n")
+    f.write(f"Características utilizadas: {X.columns.tolist()}\n")
+    # Usamos las variables mse y r2 extraídas del test set
+    f.write(f"MSE (Error Cuadrático Medio): {mse:.4f}\n")
     f.write(f"R2 Score (Coeficiente de Determinación): {r2:.4f}\n")
+    f.write(f"MAE (Error Absoluto Medio): {metricas_test['MAE']:.4f}\n")
 print(f"Métricas guardadas en {metrics_filename}.")
 
 # =======================================================
